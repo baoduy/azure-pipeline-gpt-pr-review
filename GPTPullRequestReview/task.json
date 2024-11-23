@@ -1,10 +1,10 @@
 {
-  "id": "b42fa530-c4a6-11ed-87f6-d1f44a1fead1",
+  "id": "348293bf-b24c-4ffc-bcf0-b1df74dd0b5e",
   "name": "GPTPullRequestReview",
   "friendlyName": "Review PullRequest by GPT",
   "description": "This task use OpenAi GPT model to review PullRequests",
-  "author": "Mustapha Larhrouch",
-  "helpMarkDown": "[More Information](https://github.com/mlarhrouch/azure-pipeline-gpt-pr-review)",
+  "author": "Steven Hoang",
+  "helpMarkDown": "[More Information](https://github.com/baoduy/azure-pipeline-gpt-pr-review)",
   "category": "Utility",
   "visibility": [
     "Build"
@@ -13,7 +13,7 @@
   "version": {
     "Major": "0",
     "Minor": "12",
-    "Patch": "3"
+    "Patch": "4"
   },
   "minimumAgentVersion": "1.95.0",
   "instanceNameFormat": "GPTPullRequestReview $(message)",
@@ -27,6 +27,14 @@
       "helpMarkDown": "Api key of OpenAi or Azure OpenAI."
     },
     {
+      "name": "base_url",
+      "type": "string",
+      "label": "Base url",
+      "defaultValue": "",
+      "required": false,
+      "helpMarkDown": "The base api url of OpenAi, Azure OpenAI or any OpenAPI compatible endpoint (optional)."
+    },
+    {
       "name": "model",
       "type": "pickList",
       "label": "OpenAI model",
@@ -38,14 +46,6 @@
         "gpt-3.5-turbo-16k": "GPT 3.5 Turbo 16k"
       },
       "helpMarkDown": "The OpenAI model to use. not used if you use Azure OpenAI. if no model is selected, the GPT 3.5 Turbo model is used."
-    },
-    {
-      "name": "aoi_endpoint",
-      "type": "string",
-      "label": "Azure OpenApi Endpoint",
-      "defaultValue": "",
-      "required": false,
-      "helpMarkDown": "Azure OpenApi Endpoint, leave empty to use default endpoint. (optional)"
     },
     {
       "name": "support_self_signed_certificate",
