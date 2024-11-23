@@ -1,2 +1,2 @@
 # npm install -g tfx-cli
-tfx extension create --manifest-globs vss-extension.json
+tfx extension create --manifest-globs vss-extension.json --env mode=production

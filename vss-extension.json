@@ -2,7 +2,7 @@
     "manifestVersion": 1,
     "id": "GPTPullRequestReviewDrunk",
     "name": "GPT Pull Request Review",
-    "version": "0.12.4",
+    "version": "0.12.6",
     "publisher": "baoduy2412",
     "galleryFlags": [
         "Preview"
@@ -27,7 +27,19 @@
     ],
     "files": [
         {
-            "path": "GPTPullRequestReview"
+            "path": "GPTPullRequestReview/dist"
+        },
+        {
+            "path": "GPTPullRequestReview/node_modules"
+        },
+        {
+            "path": "GPTPullRequestReview/task.json"
+        },
+        {
+            "path": "GPTPullRequestReview/icon.png"
+        },
+        {
+            "path": "GPTPullRequestReview/package.json"
         }
     ],
     "repository" : {
