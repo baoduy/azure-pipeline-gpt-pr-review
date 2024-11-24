@@ -33,7 +33,7 @@ export async function addCommentToPR(
     agent: httpsAgent,
   });
 
-  console.log(`New comment added.`);
+  console.log(`New comment added:`, comment);
 }
 
 export async function deleteExistingComments(httpsAgent: Agent) {

@@ -5,6 +5,7 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
+    "version-up": "sh increment-patch-version.sh",
     "build": "tsc -p .",
     "update": "npx npm-check-updates -u"
   },
