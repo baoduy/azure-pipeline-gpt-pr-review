@@ -7,6 +7,7 @@
   "scripts": {
     "version-up": "sh increment-patch-version.sh",
     "build": "tsc -p .",
+    "run": "node dist/index.js",
     "update": "npx npm-check-updates -u"
   },
   "keywords": [],

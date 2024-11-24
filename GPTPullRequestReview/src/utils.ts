@@ -1,10 +1,14 @@
 import * as tl from "azure-pipelines-task-lib/task.js";
 
-export function getFileExtension(fileName: string) {
-  return fileName.slice(((fileName.lastIndexOf(".") - 1) >>> 0) + 2);
+export function getFileExtension(fileName: string): string {
+  const lastDotIndex = fileName.lastIndexOf(".");
+  if (lastDotIndex === -1) {
+    return "";
+  }
+  return fileName.slice(lastDotIndex + 1).toLowerCase();
 }
 
-export function getTargetBranchName() {
+export function getTargetBranchName(): string | undefined {
   let targetBranchName = tl.getVariable("System.PullRequest.TargetBranchName");
 
   if (!targetBranchName) {
@@ -14,8 +18,11 @@ export function getTargetBranchName() {
   }
 
   if (!targetBranchName) {
+    tl.warning("Target branch name not found.");
     return undefined;
   }
 
-  return `origin/${targetBranchName}`;
+  const fullTargetBranchName = `origin/${targetBranchName}`;
+  tl.debug(`Target branch name: ${fullTargetBranchName}`);
+  return fullTargetBranchName;
 }

@@ -5,75 +5,96 @@ import { reviewFile } from "./review.js";
 import { getTargetBranchName } from "./utils.js";
 import { getChangedFiles } from "./git.js";
 
- // Function to check if a file should be included
- const shouldIncludeFile = (fileName: string,{includeExtensions,excludeExtensions}:{includeExtensions:Array<string>,excludeExtensions:Array<string>}) => {
-   const fileExt = fileName.split('.').pop()?.toLowerCase();
-   
-   // If includeExts is specified, only include files with those extensions
-   if (includeExtensions.length > 0) {
-     return includeExtensions.includes(fileExt!);
-   }
+type FileFilterOptions = {
+  includeExtensions: string[];
+  excludeExtensions: string[];
+};
 
-   // If excludeExts is specified, exclude files with those extensions
-   if (excludeExtensions.length > 0) {
-     return !excludeExtensions.includes(fileExt!);
-   }
+// Function to check if a file should be included
+const shouldIncludeFile = (
+  fileName: string,
+  { includeExtensions, excludeExtensions }: FileFilterOptions,
+): boolean => {
+  const fileExt = fileName.split(".").pop()?.toLowerCase() || "";
+  if (includeExtensions.length > 0) return includeExtensions.includes(fileExt);
+  if (excludeExtensions.length > 0) return !excludeExtensions.includes(fileExt);
+  return true;
+};
 
-   // If no include or exclude extensions are specified, include all files
-   return true;
- };
+const readConfiguration = (): {
+  apiKey: string;
+  baseURL?: string;
+  includeExts: string[];
+  excludeExts: string[];
+} => {
+  const apiKey = tl.getInput("api_key", true);
+  const baseURL = tl.getInput("base_url");
+  const includeExts =
+    tl
+      .getInput("includes")
+      ?.split(",")
+      .map((ext) => ext.trim()) ?? [];
+  const excludeExts =
+    tl
+      .getInput("excludes")
+      ?.split(",")
+      .map((ext) => ext.trim()) ?? [];
 
-async function run() {
+  if (!apiKey) throw new Error("No API Key provided!");
+
+  return { apiKey, baseURL, includeExts, excludeExts };
+};
+
+const filterFiles = (
+  files: string[],
+  filterOptions: FileFilterOptions,
+): string[] => {
+  return files.filter((fileName) => shouldIncludeFile(fileName, filterOptions));
+};
+
+const reviewFiles = async (
+  files: string[],
+  targetBranch: string,
+  openai: OpenAI,
+): Promise<void> => {
+  for (const fileName of files) {
+    await reviewFile(targetBranch, fileName, openai);
+  }
+};
+
+const main = async () => {
+  if (tl.getVariable("Build.Reason") !== "PullRequest") {
+    tl.setResult(
+      tl.TaskResult.Skipped,
+      "This task should be run only when the build is triggered from a Pull Request.",
+    );
+    return;
+  }
+
   try {
-    if (tl.getVariable("Build.Reason") !== "PullRequest") {
-      tl.setResult(
-        tl.TaskResult.Skipped,
-        "This task should be run only when the build is triggered from a Pull Request.",
-      );
-      return;
-    }
-
-    const apiKey = tl.getInput("api_key", true);
-    const baseURL = tl.getInput("base_url");
-    const includeExts = tl.getInput("includes");
-    const excludeExts = tl.getInput("excludes");
-
-    if (apiKey == undefined) {
-      tl.setResult(tl.TaskResult.Failed, "No Api Key provided!");
-      return;
-    }
-
-    const openAiConfiguration: ClientOptions = {
-      apiKey,
-      baseURL,
-    };
-
+    const { apiKey, baseURL, includeExts, excludeExts } = readConfiguration();
+    const openAiConfiguration: ClientOptions = { apiKey, baseURL };
     const openai = new OpenAI(openAiConfiguration);
+
     const targetBranch = getTargetBranchName();
+    if (!targetBranch) throw new Error("No target branch found!");
 
-    if (!targetBranch) {
-      tl.setResult(tl.TaskResult.Failed, "No target branch found!");
-      return;
-    }
-
-    const filesNames = await getChangedFiles(targetBranch);
-
-    const includeExtensions = includeExts ? includeExts.split(',').map(ext => ext.trim()) : [];
-    const excludeExtensions = excludeExts ? excludeExts.split(',').map(ext => ext.trim()) : [];
-
-    // Filter the files based on the include and exclude rules
-    const filteredFileNames = filesNames.filter(f=>shouldIncludeFile(f,{includeExtensions,excludeExtensions}));
+    const fileNames = await getChangedFiles(targetBranch);
+    const filteredFileNames = filterFiles(fileNames, {
+      includeExtensions: includeExts,
+      excludeExtensions: excludeExts,
+    });
 
     await deleteExistingComments();
-
-    for (const fileName of filteredFileNames) {
-      await reviewFile(targetBranch, fileName, openai);
-    }
+    await reviewFiles(filteredFileNames, targetBranch, openai);
 
     tl.setResult(tl.TaskResult.Succeeded, "Pull Request reviewed.");
-  } catch (err: any) {
-    tl.setResult(tl.TaskResult.Failed, err.message);
+  } catch (error: any) {
+    tl.setResult(
+      tl.TaskResult.Failed,
+      error.message || "An unknown error occurred",
+    );
   }
-}
+};
 
-run().finally();
+main().finally(() => console.log("Pipeline review task completed."));

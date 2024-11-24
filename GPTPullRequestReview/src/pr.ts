@@ -3,24 +3,44 @@ import * as tl from "azure-pipelines-task-lib/task.js";
 const getDevOpsUrl = ({
   threadId,
   commentId,
-}: { threadId?: string; commentId?: string } = {}) => {
+}: { threadId?: string; commentId?: string } = {}): string => {
   const teamUrl = tl.getVariable("SYSTEM.TEAMFOUNDATIONCOLLECTIONURI");
   const projectId = tl.getVariable("SYSTEM.TEAMPROJECTID");
   const repoName = tl.getVariable("Build.Repository.ID");
   const prId = tl.getVariable("System.PullRequest.PullRequestId");
 
-  let prUrl = `${teamUrl}${projectId}/_apis/git/repositories/${repoName}/pullRequests/${prId}/threads`;
-
-  if (threadId) {
-    prUrl = `${prUrl}/${threadId}/comments`;
-    if (commentId) prUrl = `${prUrl}/${commentId}`;
+  if (!teamUrl || !projectId || !repoName || !prId) {
+    throw new Error(
+      "Missing required environment variables for URL construction.",
+    );
   }
 
-  console.log("getDevOpsUrl:", prUrl);
+  let prUrl = `${teamUrl}${projectId}/_apis/git/repositories/${repoName}/pullRequests/${prId}/threads`;
+  if (threadId) {
+    prUrl += `/${threadId}/comments`;
+    if (commentId) prUrl += `/${commentId}`;
+  }
+
+  tl.debug(`DevOps URL constructed: ${prUrl}`);
   return `${prUrl}?api-version=7.1`;
 };
 
-export async function addCommentToPR(fileName: string, comment: string) {
+const fetchWithErrorHandling = async (
+  url: string,
+  options: RequestInit,
+): Promise<Response> => {
+  const response = await fetch(url, options);
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`HTTP error ${response.status}: ${errorText}`);
+  }
+  return response;
+};
+
+export async function addCommentToPR(
+  fileName: string,
+  comment: string,
+): Promise<void> {
   const body = {
     comments: [
       {
@@ -36,96 +56,71 @@ export async function addCommentToPR(fileName: string, comment: string) {
   };
 
   const prUrl = getDevOpsUrl();
+  const accessToken = tl.getVariable("SYSTEM.ACCESSTOKEN") || "";
 
-  await fetch(prUrl, {
+  await fetchWithErrorHandling(prUrl, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${tl.getVariable("SYSTEM.ACCESSTOKEN")}`,
+      Authorization: `Bearer ${accessToken}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify(body),
-  }).then(async (rs) => {
-    if (!rs.ok) {
-      const errorText = await rs.text();
-      throw new Error(errorText);
-    }
-    return rs;
   });
 
-  console.log(`New comment added`);
+  tl.debug(`New comment added to PR at file: ${fileName}`);
 }
 
-export async function deleteExistingComments() {
-  console.log("Start deleting existing comments added by the previous Job ...");
+export async function deleteExistingComments(): Promise<void> {
+  tl.debug("Starting deletion of existing comments added by the previous job.");
 
   const threadsUrl = getDevOpsUrl();
-  const threadsResponse = await fetch(threadsUrl, {
-    headers: {
-      Authorization: `Bearer ${tl.getVariable("SYSTEM.ACCESSTOKEN")}`,
-    },
-  }).then(async (rs) => {
-    if (!rs.ok) {
-      const errorText = await rs.text();
-      throw new Error(errorText);
-    }
-    return rs;
+  const accessToken = tl.getVariable("SYSTEM.ACCESSTOKEN") || "";
+
+  const threadsResponse = await fetchWithErrorHandling(threadsUrl, {
+    headers: { Authorization: `Bearer ${accessToken}` },
   });
 
-  const threads = (await threadsResponse.json()) as { value: [] };
+  const threads = (await threadsResponse.json()) as { value: any[] };
   const threadsWithContext = threads.value.filter(
-    (thread: any) => thread.threadContext !== null,
+    (thread) => thread.threadContext !== null,
   );
 
-  const collectionUri = tl.getVariable(
-    "SYSTEM.TEAMFOUNDATIONCOLLECTIONURI",
-  ) as string;
-  const collectionName = getCollectionName(collectionUri);
+  const collectionName = getCollectionName(
+    tl.getVariable("SYSTEM.TEAMFOUNDATIONCOLLECTIONURI") || "",
+  );
   const buildServiceName = `${tl.getVariable("SYSTEM.TEAMPROJECT")} Build Service (${collectionName})`;
 
-  for (const thread of threadsWithContext as any[]) {
+  for (const thread of threadsWithContext) {
     const commentsUrl = getDevOpsUrl({ threadId: thread.id });
-    const commentsResponse = await fetch(commentsUrl, {
-      headers: {
-        Authorization: `Bearer ${tl.getVariable("SYSTEM.ACCESSTOKEN")}`,
-      },
-    }).then(async (rs) => {
-      if (!rs.ok) {
-        const errorText = await rs.text();
-        throw new Error(errorText);
-      }
-      return rs;
+
+    const commentsResponse = await fetchWithErrorHandling(commentsUrl, {
+      headers: { Authorization: `Bearer ${accessToken}` },
     });
 
-    const comments = (await commentsResponse.json()) as { value: [] };
+    const comments = (await commentsResponse.json()) as { value: any[] };
 
     for (const comment of comments.value.filter(
-      (comment: any) => comment.author.displayName === buildServiceName,
-    ) as any[]) {
+      (comment) => comment.author.displayName === buildServiceName,
+    )) {
       const removeCommentUrl = getDevOpsUrl({
         threadId: thread.id,
         commentId: comment.id,
       });
 
-      await fetch(removeCommentUrl, {
+      await fetchWithErrorHandling(removeCommentUrl, {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${tl.getVariable("SYSTEM.ACCESSTOKEN")}`,
-        },
-      }).then(async (rs) => {
-        if (!rs.ok) {
-          const errorText = await rs.text();
-          throw new Error(errorText);
-        }
-        return rs;
+        headers: { Authorization: `Bearer ${accessToken}` },
       });
+
+      tl.debug(`Deleted comment with ID: ${comment.id}`);
     }
   }
 
-  console.log("Existing comments deleted.");
+  tl.debug("Existing comments deleted.");
 }
 
-function getCollectionName(collectionUri: string) {
-  const collectionUriWithoutProtocol = collectionUri!
+function getCollectionName(collectionUri: string): string {
+  const collectionUriWithoutProtocol = collectionUri
     .replace("https://", "")
     .replace("http://", "");
 
