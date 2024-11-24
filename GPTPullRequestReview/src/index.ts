@@ -4,7 +4,6 @@ import { deleteExistingComments } from "./pr.js";
 import { reviewFile } from "./review.js";
 import { getTargetBranchName } from "./utils.js";
 import { getChangedFiles } from "./git.js";
-import https from "https";
 
 async function run() {
   try {
@@ -16,10 +15,6 @@ async function run() {
       return;
     }
 
-    let openai: OpenAI | undefined;
-    const supportSelfSignedCertificate = tl.getBoolInput(
-      "support_self_signed_certificate",
-    );
     const apiKey = tl.getInput("api_key", true);
     const baseURL = tl.getInput("base_url");
 
@@ -33,13 +28,8 @@ async function run() {
       baseURL,
     };
 
-    openai = new OpenAI(openAiConfiguration);
-
-    const httpsAgent = new https.Agent({
-      rejectUnauthorized: !supportSelfSignedCertificate,
-    });
-
-    let targetBranch = getTargetBranchName();
+    const openai = new OpenAI(openAiConfiguration);
+    const targetBranch = getTargetBranchName();
 
     if (!targetBranch) {
       tl.setResult(tl.TaskResult.Failed, "No target branch found!");
@@ -48,10 +38,10 @@ async function run() {
 
     const filesNames = await getChangedFiles(targetBranch);
 
-    await deleteExistingComments(httpsAgent);
+    await deleteExistingComments();
 
     for (const fileName of filesNames) {
-      await reviewFile(targetBranch, fileName, httpsAgent, openai);
+      await reviewFile(targetBranch, fileName, openai);
     }
 
     tl.setResult(tl.TaskResult.Succeeded, "Pull Request reviewed.");

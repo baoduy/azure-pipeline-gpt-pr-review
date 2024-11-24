@@ -1,13 +1,11 @@
 import { git } from "./git.js";
 import { OpenAI } from "openai";
 import { addCommentToPR } from "./pr.js";
-import { Agent } from "https";
 import * as tl from "azure-pipelines-task-lib/task.js";
 
 export async function reviewFile(
   targetBranch: string,
   fileName: string,
-  httpsAgent: Agent,
   openai: OpenAI,
 ) {
   console.log(`Start reviewing ${fileName} ...`);
@@ -48,7 +46,7 @@ export async function reviewFile(
       const review = choices[0].message?.content as string;
 
       if (review.trim() !== "No feedback.") {
-        await addCommentToPR(fileName, review, httpsAgent);
+        await addCommentToPR(fileName, review);
       }
     }
 

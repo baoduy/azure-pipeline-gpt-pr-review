@@ -2,7 +2,7 @@
     "manifestVersion": 1,
     "id": "GPTPullRequestReviewDrunk",
     "name": "GPT Pull Request Review",
-    "version": "0.12.17",
+    "version": "0.12.22",
     "publisher": "baoduy2412",
     "galleryFlags": [
         "Preview"

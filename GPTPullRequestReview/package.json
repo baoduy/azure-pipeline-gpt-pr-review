@@ -15,14 +15,11 @@
   "dependencies": {
     "azure-pipelines-task-lib": "^4.17.3",
     "binary-extensions": "^3.0.0",
-    "node-fetch": "^3.3.2",
     "openai": "^4.73.0",
     "simple-git": "^3.27.0"
   },
   "devDependencies": {
     "@types/node": "^22.9.2",
-    "@types/node-fetch": "^2.6.12",
-    "@types/q": "^1.5.8",
     "typescript": "^5.7.2"
   }
 }
