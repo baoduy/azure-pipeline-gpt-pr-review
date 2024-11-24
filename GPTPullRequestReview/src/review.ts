@@ -1,8 +1,8 @@
-import { git } from "./git";
+import { git } from "./git.js";
 import { OpenAI } from "openai";
-import { addCommentToPR } from "./pr";
+import { addCommentToPR } from "./pr.js";
 import { Agent } from "https";
-import * as tl from "azure-pipelines-task-lib/task";
+import * as tl from "azure-pipelines-task-lib/task.js";
 
 export async function reviewFile(
   targetBranch: string,

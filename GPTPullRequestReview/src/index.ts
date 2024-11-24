@@ -1,9 +1,9 @@
-import * as tl from "azure-pipelines-task-lib/task";
+import * as tl from "azure-pipelines-task-lib/task.js";
 import { ClientOptions, OpenAI } from "openai";
-import { deleteExistingComments } from "./pr";
-import { reviewFile } from "./review";
-import { getTargetBranchName } from "./utils";
-import { getChangedFiles } from "./git";
+import { deleteExistingComments } from "./pr.js";
+import { reviewFile } from "./review.js";
+import { getTargetBranchName } from "./utils.js";
+import { getChangedFiles } from "./git.js";
 import https from "https";
 
 async function run() {

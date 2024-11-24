@@ -1,6 +1,6 @@
-import * as tl from "azure-pipelines-task-lib/task";
+import * as tl from "azure-pipelines-task-lib/task.js";
 import { Agent } from "https";
-import fetch from "node-fetch-commonjs";
+import fetch from "node-fetch";
 
 export async function addCommentToPR(
   fileName: string,

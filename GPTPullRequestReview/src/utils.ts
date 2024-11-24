@@ -1,4 +1,4 @@
-import * as tl from "azure-pipelines-task-lib/task";
+import * as tl from "azure-pipelines-task-lib/task.js";
 
 export function getFileExtension(fileName: string) {
   return fileName.slice(((fileName.lastIndexOf(".") - 1) >>> 0) + 2);

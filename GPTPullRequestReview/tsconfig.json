@@ -2,7 +2,7 @@
   "include": ["./src/**/*"],
   "exclude": ["node_modules"],
   "compilerOptions": {
-    "module": "CommonJS",        // Use the latest ECMAScript module system
+    "module": "ES6",        // Use the latest ECMAScript module system
     "target": "ES6",        // Target the latest ECMAScript version
     "outDir": "./dist",        // Output directory for compiled files
     "moduleResolution": "Node",
