@@ -68,9 +68,34 @@ By following these steps, you ensure that the build service agent can interact w
 Add a checkout section with `persistCredentials` set to `true`.
 
 ```yaml
-steps:
-- checkout: self
-  persistCredentials: true
+trigger:
+  branches:
+    exclude:
+      - '*'
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+pr:
+  branches:
+    include:
+      - '*'
+
+variables:
+  - group: openAI
+
+jobs:
+  - job: CodeReview
+    steps:
+      - checkout: self
+        persistCredentials: true
+
+      - task: GPTPullRequestReview@0
+        inputs:
+          api_key: '$(open-ai-key)'
+          model: 'gpt-4'
+          includes: 'cs,ts,js'
+          excludes: 'md,txt,py'
 ```
 
 ### Azure Open AI service
