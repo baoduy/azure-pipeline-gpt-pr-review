@@ -5,6 +5,24 @@ import { reviewFile } from "./review.js";
 import { getTargetBranchName } from "./utils.js";
 import { getChangedFiles } from "./git.js";
 
+ // Function to check if a file should be included
+ const shouldIncludeFile = (fileName: string,{includeExtensions,excludeExtensions}:{includeExtensions:Array<string>,excludeExtensions:Array<string>}) => {
+   const fileExt = fileName.split('.').pop()?.toLowerCase();
+   
+   // If includeExts is specified, only include files with those extensions
+   if (includeExtensions.length > 0) {
+     return includeExtensions.includes(fileExt!);
+   }
+
+   // If excludeExts is specified, exclude files with those extensions
+   if (excludeExtensions.length > 0) {
+     return !excludeExtensions.includes(fileExt!);
+   }
+
+   // If no include or exclude extensions are specified, include all files
+   return true;
+ };
+
 async function run() {
   try {
     if (tl.getVariable("Build.Reason") !== "PullRequest") {
@@ -17,6 +35,8 @@ async function run() {
 
     const apiKey = tl.getInput("api_key", true);
     const baseURL = tl.getInput("base_url");
+    const includeExts = tl.getInput("includes");
+    const excludeExts = tl.getInput("excludes");
 
     if (apiKey == undefined) {
       tl.setResult(tl.TaskResult.Failed, "No Api Key provided!");
@@ -37,6 +57,12 @@ async function run() {
     }
 
     const filesNames = await getChangedFiles(targetBranch);
+
+    const includeExtensions = includeExts ? includeExts.split(',').map(ext => ext.trim()) : [];
+    const excludeExtensions = excludeExts ? excludeExts.split(',').map(ext => ext.trim()) : [];
+
+    // Filter the files based on the include and exclude rules
+    const filteredFileNames = filesNames.filter(f=>shouldIncludeFile(f,{includeExtensions,excludeExtensions}));
 
     await deleteExistingComments();
 
