@@ -49,12 +49,12 @@ To use the GPT Pull Request Review task, you need to ensure the build service ag
 3. **Add Build Service Account**:
    - Click on "Add" to add a new user or group.
    - Search for and select the build service account (e.g., `ProjectName Build Service (OrganizationName)`).
-    ![Build service account](/images/build_service_account.png?raw=true)
+    ![Build service account](https://github.com/baoduy/azure-pipeline-gpt-pr-review/blob/main/images/build_service_account.png?raw=true)
 
 4. **Assign Permissions**:
    - Add the build service account to the `Build Administrators` group or grant it the specific permission "Contribute to pull requests".
   
-    ![Contribute to PR](/images/contribute_to_pr.png?raw=true)
+    ![Contribute to PR](https://github.com/baoduy/azure-pipeline-gpt-pr-review/blob/main/images/contribute_to_pr.png?raw=true)
 
 5. **Verify Permissions**:
    - Ensure the build service account has the required permissions by checking the permissions list.
