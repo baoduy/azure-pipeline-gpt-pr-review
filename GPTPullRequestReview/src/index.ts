@@ -66,7 +66,7 @@ async function run() {
 
     await deleteExistingComments();
 
-    for (const fileName of filesNames) {
+    for (const fileName of filteredFileNames) {
       await reviewFile(targetBranch, fileName, openai);
     }
 
